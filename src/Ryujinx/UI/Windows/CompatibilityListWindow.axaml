@@ -316,7 +316,7 @@
                             </Grid>
                             <TextBlock Grid.Column="3"
                                        Opacity="0.8"
-                                       Text="{Binding FormattedIssueLabels}"
+                                       Text="{Binding FormattedCompatibilityDetails}"
                                        VerticalAlignment="Center"
                                        HorizontalAlignment="Left"
                                        TextWrapping="WrapWithOverflow" />

@@ -102,10 +102,10 @@
                                                         Text="{Binding LocalizedStatusTooltip}" />
                                                     <Separator 
                                                         Margin="0, 10, 0, 10" 
-                                                        IsVisible="{Binding HasCompatibilityLabels}" />
+                                                        IsVisible="{Binding HasCompatibilityDetails}" />
                                                     <TextBlock 
-                                                        IsVisible="{Binding HasCompatibilityLabels}"
-                                                        Text="{Binding FormattedCompatibilityLabels}" />
+                                                        IsVisible="{Binding HasCompatibilityDetails}"
+                                                        Text="{Binding FormattedCompatibilityDetails}" />
                                                 </StackPanel>
                                             </ToolTip.Tip>
                                             <TextBlock

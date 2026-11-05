@@ -206,8 +206,14 @@ namespace Ryujinx.Ava.Systems.AppLibrary
 
         public bool HasCompatibilityLabels => !FormattedCompatibilityLabels.Equals(string.Empty);
 
+        public bool HasCompatibilityDetails =>
+            Compatibility.Convert(x => !string.IsNullOrEmpty(x.FormattedCompatibilityDetails)).OrElse(false);
+
         public string FormattedCompatibilityLabels
             => Compatibility.Convert(x => x.FormattedIssueLabels).OrElse(string.Empty);
+
+        public string FormattedCompatibilityDetails
+            => Compatibility.Convert(x => x.FormattedCompatibilityDetails).OrElse(string.Empty);
 
         public LocaleKeys? PlayabilityStatus => Compatibility.Convert(x => x.Status).OrElse(null);
 
