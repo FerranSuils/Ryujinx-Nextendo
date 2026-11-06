@@ -1,4 +1,5 @@
 using Ryujinx.Common;
+using Ryujinx.Common.Logging;
 using Ryujinx.Graphics.Device;
 using Ryujinx.Graphics.Nvdec.Image;
 using Ryujinx.Graphics.Nvdec.Types.Vp9;
@@ -18,57 +19,96 @@ namespace Ryujinx.Graphics.Nvdec
 
         public unsafe static void Decode(ResourceManager rm, ref NvdecRegisters state)
         {
-            PictureInfo pictureInfo = rm.MemoryManager.DeviceRead<PictureInfo>(state.SetDrvPicSetupOffset);
-            EntropyProbs entropy = rm.MemoryManager.DeviceRead<EntropyProbs>(state.Vp9SetProbTabBufOffset);
+            ISurface lastSurface = null;
+            ISurface goldenSurface = null;
+            ISurface altSurface = null;
+            ISurface currentSurface = null;
 
-            ISurface Rent(uint lumaOffset, uint chromaOffset, FrameSize size)
+            try
             {
-                return rm.Cache.Get(_decoder, lumaOffset, chromaOffset, size.Width, size.Height);
+                PictureInfo pictureInfo = rm.MemoryManager.DeviceRead<PictureInfo>(state.SetDrvPicSetupOffset);
+                int bitstreamSize = (int)pictureInfo.BitstreamSize;
+                if (!NvdecDecodeSafety.TryValidateBitstreamSize(bitstreamSize, ApplicationId.Vp9))
+                {
+                    return;
+                }
+
+                if (!NvdecDecodeSafety.TryValidateDimensions(pictureInfo.LastFrameSize.Width, pictureInfo.LastFrameSize.Height, ApplicationId.Vp9) ||
+                    !NvdecDecodeSafety.TryValidateDimensions(pictureInfo.GoldenFrameSize.Width, pictureInfo.GoldenFrameSize.Height, ApplicationId.Vp9) ||
+                    !NvdecDecodeSafety.TryValidateDimensions(pictureInfo.AltFrameSize.Width, pictureInfo.AltFrameSize.Height, ApplicationId.Vp9) ||
+                    !NvdecDecodeSafety.TryValidateDimensions(pictureInfo.CurrentFrameSize.Width, pictureInfo.CurrentFrameSize.Height, ApplicationId.Vp9))
+                {
+                    return;
+                }
+
+                EntropyProbs entropy = rm.MemoryManager.DeviceRead<EntropyProbs>(state.Vp9SetProbTabBufOffset);
+
+                ISurface Rent(uint lumaOffset, uint chromaOffset, FrameSize size)
+                {
+                    return rm.Cache.Get(_decoder, lumaOffset, chromaOffset, size.Width, size.Height);
+                }
+
+                lastSurface = Rent(state.SetPictureLumaOffset[0], state.SetPictureChromaOffset[0], pictureInfo.LastFrameSize);
+                goldenSurface = Rent(state.SetPictureLumaOffset[1], state.SetPictureChromaOffset[1], pictureInfo.GoldenFrameSize);
+                altSurface = Rent(state.SetPictureLumaOffset[2], state.SetPictureChromaOffset[2], pictureInfo.AltFrameSize);
+                currentSurface = Rent(state.SetPictureLumaOffset[3], state.SetPictureChromaOffset[3], pictureInfo.CurrentFrameSize);
+
+                Vp9PictureInfo info = pictureInfo.Convert();
+
+                info.LastReference = lastSurface;
+                info.GoldenReference = goldenSurface;
+                info.AltReference = altSurface;
+
+                entropy.Convert(ref info.Entropy);
+
+                ReadOnlySpan<byte> bitstream = rm.MemoryManager.DeviceGetSpan(state.SetInBufBaseOffset, bitstreamSize);
+
+                ReadOnlySpan<Vp9MvRef> mvsIn = ReadOnlySpan<Vp9MvRef>.Empty;
+
+                if (info.UsePrevInFindMvRefs)
+                {
+                    mvsIn = GetMvsInput(rm.MemoryManager, pictureInfo.CurrentFrameSize, state.Vp9SetColMvReadBufOffset);
+                }
+
+                int miCols = BitUtils.DivRoundUp(pictureInfo.CurrentFrameSize.Width, 8);
+                int miRows = BitUtils.DivRoundUp(pictureInfo.CurrentFrameSize.Height, 8);
+                long mvBytes = (long)miRows * miCols * 16;
+                if (mvBytes <= 0 || mvBytes > NvdecDecodeSafety.MaxBitstreamBytes)
+                {
+                    Logger.Warning?.Print(LogClass.Nvdec,
+                        $"VP9 NVDEC: MV buffer size {mvBytes} is invalid.");
+                    return;
+                }
+
+                using WritableRegion mvsRegion = rm.MemoryManager.GetWritableRegion(ExtendOffset(state.Vp9SetColMvWriteBufOffset), (int)mvBytes);
+
+                Span<Vp9MvRef> mvsOut = MemoryMarshal.Cast<byte, Vp9MvRef>(mvsRegion.Memory.Span);
+
+                uint lumaOffset = state.SetPictureLumaOffset[3];
+                uint chromaOffset = state.SetPictureChromaOffset[3];
+
+                if (_decoder.Decode(ref info, currentSurface, bitstream, mvsIn, mvsOut))
+                {
+                    SurfaceWriter.Write(rm.MemoryManager, currentSurface, lumaOffset, chromaOffset);
+                }
+
+                WriteBackwardUpdates(rm.MemoryManager, state.Vp9SetCtxCounterBufOffset, ref info.BackwardUpdateCounts);
             }
-
-            ISurface lastSurface = Rent(state.SetPictureLumaOffset[0], state.SetPictureChromaOffset[0], pictureInfo.LastFrameSize);
-            ISurface goldenSurface = Rent(state.SetPictureLumaOffset[1], state.SetPictureChromaOffset[1], pictureInfo.GoldenFrameSize);
-            ISurface altSurface = Rent(state.SetPictureLumaOffset[2], state.SetPictureChromaOffset[2], pictureInfo.AltFrameSize);
-            ISurface currentSurface = Rent(state.SetPictureLumaOffset[3], state.SetPictureChromaOffset[3], pictureInfo.CurrentFrameSize);
-
-            Vp9PictureInfo info = pictureInfo.Convert();
-
-            info.LastReference = lastSurface;
-            info.GoldenReference = goldenSurface;
-            info.AltReference = altSurface;
-
-            entropy.Convert(ref info.Entropy);
-
-            ReadOnlySpan<byte> bitstream = rm.MemoryManager.DeviceGetSpan(state.SetInBufBaseOffset, (int)pictureInfo.BitstreamSize);
-
-            ReadOnlySpan<Vp9MvRef> mvsIn = ReadOnlySpan<Vp9MvRef>.Empty;
-
-            if (info.UsePrevInFindMvRefs)
+            catch (Exception ex)
             {
-                mvsIn = GetMvsInput(rm.MemoryManager, pictureInfo.CurrentFrameSize, state.Vp9SetColMvReadBufOffset);
+                Logger.Error?.Print(LogClass.Nvdec, $"VP9 NVDEC decode failed: {ex.Message}");
             }
-
-            int miCols = BitUtils.DivRoundUp(pictureInfo.CurrentFrameSize.Width, 8);
-            int miRows = BitUtils.DivRoundUp(pictureInfo.CurrentFrameSize.Height, 8);
-
-            using WritableRegion mvsRegion = rm.MemoryManager.GetWritableRegion(ExtendOffset(state.Vp9SetColMvWriteBufOffset), miRows * miCols * 16);
-
-            Span<Vp9MvRef> mvsOut = MemoryMarshal.Cast<byte, Vp9MvRef>(mvsRegion.Memory.Span);
-
-            uint lumaOffset = state.SetPictureLumaOffset[3];
-            uint chromaOffset = state.SetPictureChromaOffset[3];
-
-            if (_decoder.Decode(ref info, currentSurface, bitstream, mvsIn, mvsOut))
+            finally
             {
-                SurfaceWriter.Write(rm.MemoryManager, currentSurface, lumaOffset, chromaOffset);
+                if (lastSurface is not null)
+                    rm.Cache.Put(lastSurface);
+                if (goldenSurface is not null)
+                    rm.Cache.Put(goldenSurface);
+                if (altSurface is not null)
+                    rm.Cache.Put(altSurface);
+                if (currentSurface is not null)
+                    rm.Cache.Put(currentSurface);
             }
-
-            WriteBackwardUpdates(rm.MemoryManager, state.Vp9SetCtxCounterBufOffset, ref info.BackwardUpdateCounts);
-
-            rm.Cache.Put(lastSurface);
-            rm.Cache.Put(goldenSurface);
-            rm.Cache.Put(altSurface);
-            rm.Cache.Put(currentSurface);
         }
 
         private static ReadOnlySpan<Vp9MvRef> GetMvsInput(DeviceMemoryManager mm, FrameSize size, uint offset)

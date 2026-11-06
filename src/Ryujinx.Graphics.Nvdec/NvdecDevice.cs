@@ -1,6 +1,7 @@
 using Ryujinx.Common.Logging;
 using Ryujinx.Graphics.Device;
 using Ryujinx.Graphics.Nvdec.Image;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
@@ -62,20 +63,34 @@ namespace Ryujinx.Graphics.Nvdec
 
         private void Decode(ApplicationId applicationId)
         {
-            switch (applicationId)
+            if (_currentContext == null)
             {
-                case ApplicationId.H264:
-                    H264Decoder.Decode(_currentContext, _rm, ref _state.State);
-                    break;
-                case ApplicationId.Vp8:
-                    Vp8Decoder.Decode(_currentContext, _rm, ref _state.State);
-                    break;
-                case ApplicationId.Vp9:
-                    Vp9Decoder.Decode(_rm, ref _state.State);
-                    break;
-                default:
-                    Logger.Error?.Print(LogClass.Nvdec, $"Unsupported codec \"{applicationId}\".");
-                    break;
+                Logger.Warning?.Print(LogClass.Nvdec,
+                    $"NVDEC decode with no bound context (codec {applicationId}).");
+                return;
+            }
+
+            try
+            {
+                switch (applicationId)
+                {
+                    case ApplicationId.H264:
+                        H264Decoder.Decode(_currentContext, _rm, ref _state.State);
+                        break;
+                    case ApplicationId.Vp8:
+                        Vp8Decoder.Decode(_currentContext, _rm, ref _state.State);
+                        break;
+                    case ApplicationId.Vp9:
+                        Vp9Decoder.Decode(_rm, ref _state.State);
+                        break;
+                    default:
+                        Logger.Error?.Print(LogClass.Nvdec, $"Unsupported codec \"{applicationId}\".");
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error?.Print(LogClass.Nvdec, $"NVDEC ({applicationId}) failed: {ex.Message}");
             }
         }
     }
