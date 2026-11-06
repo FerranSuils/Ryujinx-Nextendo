@@ -64,7 +64,8 @@ namespace Ryujinx.Ava.Systems
             GameName = ColStr(row[indices.GameName]);
             _nextendo = new(ResolveNextendo);
 
-            Labels = ColStr(row[indices.Labels]).Split(';');
+            Labels = ColStr(row[indices.Labels])
+                .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             Status = ColStr(row[indices.Status]).ToLower() switch
             {
                 "playable" => LocaleKeys.CompatibilityListPlayable,
@@ -77,6 +78,13 @@ namespace Ryujinx.Ava.Systems
 
             if (DateTime.TryParse(ColStr(row[indices.LastUpdated]), out DateTime dt))
                 LastUpdated = dt;
+
+            string knownIssuesRow = indices.HasKnownIssues
+                ? ColStr(row[indices.KnownIssues])
+                : string.Empty;
+            KnownIssues = !string.IsNullOrWhiteSpace(knownIssuesRow)
+                ? knownIssuesRow
+                : BuildKnownIssuesFromLabels(Labels);
 
             return;
 
@@ -108,6 +116,7 @@ namespace Ryujinx.Ava.Systems
             return NextendoCatalogVersions.TryGetValue(id, out string v) ? (true, v ?? string.Empty) : (false, string.Empty);
         }
         public string[] Labels { get; }
+        public string KnownIssues { get; }
         public LocaleKeys? Status { get; }
 
         public LocaleKeys? StatusDescription
@@ -135,6 +144,32 @@ namespace Ryujinx.Ava.Systems
             .Select(FormatLabelName)
             .Where(x => x != null)
             .JoinToString(", ");
+
+        public string FormattedCompatibilityDetails
+        {
+            get
+            {
+                string labels = FormattedIssueLabels;
+                if (string.IsNullOrEmpty(labels))
+                    return KnownIssues;
+
+                if (string.IsNullOrEmpty(KnownIssues))
+                    return labels;
+
+                return labels + " — " + KnownIssues;
+            }
+        }
+
+        public static string BuildKnownIssuesFromLabels(string[] labels)
+        {
+            if (labels.Length == 0)
+                return "No known glitches recorded for this title.";
+
+            return labels
+                .Select(DescribeLabel)
+                .Where(x => !string.IsNullOrEmpty(x))
+                .JoinToString(" ");
+        }
 
         public override string ToString() =>
             new StringBuilder("CompatibilityEntry: {")
@@ -184,10 +219,58 @@ namespace Ryujinx.Ava.Systems
             "loader-allocator" => "Loader Allocator",
             "audout" => "AudOut",
             "32-bit" => "32-bit Game",
-            "UE4" => "Unreal Engine 4",
+            "ue4" => "Unreal Engine 4",
             "homebrew" => "Homebrew Content",
             "online-broken" => "Online Broken",
+            "online" => "Online Services",
+            "needs update" => "Needs Update",
+            "incomplete" => "Incomplete Report",
+            "demo" => "Demo Build",
+            "lan" => "LAN Multiplayer",
+            "compat-unverified" => "Unverified Status",
             _ => null
+        };
+
+        public static string DescribeLabel(string labelName) => labelName.ToLower() switch
+        {
+            "audio" => "Audio issues such as silence, crackling, or desync.",
+            "audout" => "AudOut service issues affecting sound output.",
+            "gpu" => "GPU rendering glitches, corruption, or missing visuals.",
+            "nvdec" => "Hardware video decoding (NVDEC) problems; cutscenes or FMV may fail.",
+            "crash" => "The game crashes during play or at specific scenes.",
+            "deadlock" => "The game can hang or deadlock.",
+            "slow" => "Performance is below expected frame rate.",
+            "services" => "HLE service emulation issues.",
+            "services-horizon" => "New Horizon service stubs are incomplete.",
+            "online" => "Online features are affected or untested.",
+            "online-broken" => "Online multiplayer or services do not work.",
+            "ldn-works" => "Local wireless (LDN) works with limitations.",
+            "ldn-untested" => "Local wireless (LDN) has not been verified.",
+            "ldn-broken" => "Local wireless (LDN) does not work.",
+            "ldn-partial" => "Local wireless (LDN) works only partially.",
+            "ldn" => "Local wireless (LDN) related issue.",
+            "opengl-backend-bug" => "OpenGL graphics backend bug.",
+            "vulkan-backend-bug" => "Vulkan graphics backend bug.",
+            "opengl" => "OpenGL-specific problem.",
+            "amd-vendor-bug" => "AMD GPU-specific driver or backend issue.",
+            "intel-vendor-bug" => "Intel GPU-specific driver or backend issue.",
+            "mac-bug" => "macOS-specific problem.",
+            "loader-allocator" => "Loader memory allocator issue at startup.",
+            "32-bit" => "32-bit title; may need specific CPU settings.",
+            "ue4" => "Unreal Engine 4 title with engine-specific bugs.",
+            "homebrew" => "Homebrew content; not a commercial release.",
+            "regression" => "Previously worked; broke in a newer emulator build.",
+            "bug" => "General emulation bug.",
+            "cpu" => "CPU emulation issue.",
+            "kernel" => "Kernel/HOS emulation issue.",
+            "horizon" => "Horizon OS service issue.",
+            "gui" => "Emulator UI or overlay issue.",
+            "needs update" => "Game or emulator build needs an update for this title.",
+            "incomplete" => "Compatibility report is incomplete.",
+            "demo" => "Demo build; full game may differ.",
+            "lan" => "LAN multiplayer label from the tracker.",
+            "compat-unverified" => "No verified status on the tracker; treat as unknown.",
+            _ => $"Tracked label: {labelName}."
         };
     }
 
@@ -198,11 +281,26 @@ namespace Ryujinx.Ava.Systems
         private const string LabelsCol = "\"labels\"";
         private const string StatusCol = "\"status\"";
         private const string LastUpdatedCol = "\"last_updated\"";
+        private const string KnownIssuesCol = "\"known_issues\"";
 
         public readonly int TitleId = getIndex(TitleIdCol);
         public readonly int GameName = getIndex(GameNameCol);
         public readonly int Labels = getIndex(LabelsCol);
         public readonly int Status = getIndex(StatusCol);
         public readonly int LastUpdated = getIndex(LastUpdatedCol);
+        public readonly int KnownIssues = TryGetIndex(getIndex, KnownIssuesCol);
+        public readonly bool HasKnownIssues = TryGetIndex(getIndex, KnownIssuesCol) >= 0;
+
+        private static int TryGetIndex(Func<ReadOnlySpan<char>, int> getIndex, string column)
+        {
+            try
+            {
+                return getIndex(column);
+            }
+            catch
+            {
+                return -1;
+            }
+        }
     }
 }
