@@ -1417,7 +1417,7 @@ issue_number,issue_title,extracted_game_id,issue_labels,extracted_status,last_ev
 1529,Slice Dice & Rice - 0100F4500AA4E000,0100F4500AA4E000,online;status-playable,playable,2021-02-22 17:44:23,2,playable,online,Online features are affected or untested.
 1530,Slayaway Camp: Butcher's Cut - 0100501006494000,0100501006494000,status-playable;opengl-backend-bug,playable,2022-08-12 23:44:05,4,playable,opengl-backend-bug,OpenGL graphics backend bug.
 1531,Snowboarding the Next Phase - 0100BE200C34A000,0100BE200C34A000,nvdec;status-playable,playable,2021-02-23 12:56:58,2,playable,nvdec,Hardware video decoding (NVDEC) problems; cutscenes or FMV may fail.
-1532,Skylanders Imaginators,,crash;services;status-boots,boots,2020-05-30 18:49:18,1,playable,,No known glitches recorded for this title.
+1532,Skylanders Imaginators,,crash;services;status-boots,boots,2020-05-30 18:49:18,1,boots,crash;services,The game crashes during play or at specific scenes. HLE service emulation issues.
 1533,Slime-san Superslime Edition,,status-playable,playable,2020-05-30 19:08:08,1,playable,,No known glitches recorded for this title.
 1534,Skee-Ball,,status-playable,playable,2020-11-16 4:44:07,3,playable,,No known glitches recorded for this title.
 1535,Marvel Ultimate Alliance 3: The Black Order - 010060700AC50000,010060700AC50000,status-playable;nvdec;ldn-untested,playable,2024-02-14 19:51:51,33,playable,nvdec;ldn-untested,Hardware video decoding (NVDEC) problems; cutscenes or FMV may fail. Local wireless (LDN) has not been verified.
@@ -2397,7 +2397,7 @@ issue_number,issue_title,extracted_game_id,issue_labels,extracted_status,last_ev
 2593,Preventive Strike - 010009300D278000,010009300D278000,status-playable;nvdec,playable,2022-10-06 10:55:51,2,playable,nvdec,Hardware video decoding (NVDEC) problems; cutscenes or FMV may fail.
 2594,Hidden - 01004E800F03C000,01004E800F03C000,slow;status-ingame,ingame,2022-10-05 10:56:53,2,ingame,slow,Performance is below expected frame rate.
 2595,Pulstario - 0100861012474000,0100861012474000,status-playable,playable,2022-10-06 11:02:01,2,playable,,No known glitches recorded for this title.
-2596,Frontline Zed,,status-playable,playable,2020-10-03 12:55:59,1,playable,status-playable,No known glitches recorded for this title.
+2596,Frontline Zed,,status-playable,playable,2020-10-03 12:55:59,1,playable,,No known glitches recorded for this title.
 2597,bayala - the game - 0100194010422000,0100194010422000,status-playable,playable,2022-10-04 14:09:25,2,playable,,No known glitches recorded for this title.
 2598,City Bus Driving Simulator - 01005E501284E000,01005E501284E000,status-playable,playable,2021-06-15 21:25:59,2,playable,,No known glitches recorded for this title.
 2599,Memory Lane - 010062F011E7C000,010062F011E7C000,status-playable;UE4,playable,2022-10-05 14:31:03,3,playable,UE4,Unreal Engine 4 title with engine-specific bugs.

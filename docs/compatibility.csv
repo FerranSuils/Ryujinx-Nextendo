@@ -1534,6 +1534,7 @@ title_id,game_name,labels,status,last_updated,known_issues
 0100F200178F4000,Front Mission 1st Remake,,playable,2023-06-09 7:44:24,No known glitches recorded for this title.
 0100C4E018A24000,FRONT MISSION 2: Remake,,playable,2025-07-30 12:11:23,No known glitches recorded for this title.
 01007E6019872000,FRONT MISSION 3: Remake,,playable,2025-07-30 12:12:02,No known glitches recorded for this title.
+,Frontline Zed,,playable,2020-10-03 12:55:59,No known glitches recorded for this title.
 0100B5300B49A000,Frost,,playable,2022-07-27 12:00:36,No known glitches recorded for this title.
 010038A007AA4000,Fruitfall Crush,,playable,2020-10-20 11:33:33,No known glitches recorded for this title.
 ,Full Metal Furies,online,boots,2020-05-18 13:22:06,Online features are affected or untested.
@@ -1950,6 +1951,7 @@ title_id,game_name,labels,status,last_updated,known_issues
 01001F5006DF6000,Jim Is Moving Out!,deadlock,ingame,2020-06-03 22:05:19,The game can hang or deadlock.
 0100F4D00D8BE000,Jinrui no Ninasama he,crash,ingame,2023-03-07 2:04:17,The game crashes during play or at specific scenes.
 010038D011F08000,Jisei: The First Case HD,audio,playable,2022-10-05 11:43:33,"Audio issues such as silence, crackling, or desync."
+0000000000000000,JKSV - 00000000000000000,Needs Update;homebrew,boots,2022-04-21 23:34:59,Game or emulator build needs an update for this title. Homebrew content; not a commercial release.
 01007CE00C960000,Job the Leprechaun,,playable,2020-06-05 12:10:06,No known glitches recorded for this title.
 ,Joe Dever's Lone Wolf,compat-unverified,boots,2020-04-15 18:27:04,No verified status on the tracker; treat as unknown.
 01007090104EC000,John Wick Hex,,playable,2022-08-07 8:29:12,No known glitches recorded for this title.
@@ -2631,7 +2633,6 @@ title_id,game_name,labels,status,last_updated,known_issues
 010043C019088000,Numolition,compat-unverified,boots,2023-05-17 2:29:23,No verified status on the tracker; treat as unknown.
 ,Nurse Love Addiction,compat-unverified,boots,2020-06-12 16:48:29,No verified status on the tracker; treat as unknown.
 010003701002C000,Nurse Love Syndrome,,playable,2022-10-13 10:05:22,No known glitches recorded for this title.
-0000000000000000,nx-hbmenu,Needs Update;homebrew,boots,2024-04-06 22:05:32,Game or emulator build needs an update for this title. Homebrew content; not a commercial release.
 ,nx-hbmenu,Needs Update;homebrew,boots,2024-04-06 22:05:32,Game or emulator build needs an update for this title. Homebrew content; not a commercial release.
 ,nxquake2,services;crash;homebrew,nothing,2022-08-04 23:14:04,HLE service emulation issues. The game crashes during play or at specific scenes. Homebrew content; not a commercial release.
 010049F00EC30000,Nyan Cat: Lost in Space,online,playable,2021-06-12 13:22:03,Online features are affected or untested.
@@ -3410,8 +3411,8 @@ title_id,game_name,labels,status,last_updated,known_issues
 0100C52011460000,Sky: Children of the Light,cpu;online-broken,nothing,2023-02-23 10:57:10,CPU emulation issue. Online multiplayer or services do not work.
 010041C01014E000,Skybolt Zack,,playable,2021-04-12 18:28:00,No known glitches recorded for this title.
 0100A0A00D1AA000,SKYHILL,,playable,2021-03-05 15:19:11,No known glitches recorded for this title.
+010048D000BFC000,Skylanders Imaginators,crash;services,boots,2020-05-30 18:49:18,The game crashes during play or at specific scenes. HLE service emulation issues.
 0100CCC0002E6000,Skylanders Imaginators,crash;services,boots,2020-05-30 18:49:18,The game crashes during play or at specific scenes. HLE service emulation issues.
-010048D000BFC000,Skylanders Imaginators,,playable,2026-07-02 22:43:30,No known glitches recorded for this title.
 010021A00ABEE000,SKYPEACE,,playable,2020-05-29 14:14:30,No known glitches recorded for this title.
 0100EA400BF44000,SkyScrappers,,playable,2020-05-28 22:11:25,No known glitches recorded for this title.
 0100F3C00C400000,SkyTime,slow,ingame,2020-05-30 9:24:51,Performance is below expected frame rate.
